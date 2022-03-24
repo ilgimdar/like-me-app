@@ -1,0 +1,1 @@
+web: gunicorn likester.wsgi --log-file -
