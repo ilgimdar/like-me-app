@@ -25,3 +25,8 @@ class ParticipantFilter(filters.FilterSet):
         model = Participant
         # Поля для фильтрации
         fields = ('gender', 'name')
+
+
+class DistanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('id1', 'id2')

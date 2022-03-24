@@ -2,6 +2,8 @@ from django.core.mail import send_mail
 
 from PIL import Image
 
+from geopy import distance
+
 
 def watermark_with_transparency(input_image_path,
                                 output_image_path,
@@ -31,3 +33,11 @@ def send_love_message(email, message):
         [email],
         fail_silently=False,
     )
+
+
+def geo_distance(coord1, coord2):
+    return distance.geodesic(coord1, coord2).km
+
+
+def float_normalize(f):
+    return f.replace(',', '.')

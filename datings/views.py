@@ -4,10 +4,10 @@ from rest_framework import permissions
 from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.response import Response
 
-from logic import jpg_to_png, watermark_with_transparency, send_love_message
+from logic import jpg_to_png, watermark_with_transparency, send_love_message, geo_distance, float_normalize
 from mysite.settings import MEDIA_ROOT
 from .models import Participant
-from .serializers import ParticipantSerializer, MatchSerializer, ParticipantFilter
+from .serializers import ParticipantSerializer, MatchSerializer, ParticipantFilter, DistanceSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 
 
@@ -78,10 +78,9 @@ class MatchView(ListAPIView):
                 send_love_message(email2,
                                   'Поздравляем! У вас взаимная симпатия с пользователем ' + from_participant.name +
                                   '!\n Вот почта для связи: ' + from_participant.email)
-                print('Emails are successfully sent')
+                return Response(json.dumps({"message": "Match! Emails were successfully sent"}), status=200)
             else:
-                print('Oh, nooooo!')
-            return Response(json.dumps({"message": "This is life"}), status=200)
+                return Response(json.dumps({"message": "User added to the liked list. No match"}), status=200)
         else:
             return Response(json.dumps({"message": "ids not exist"}), status=200)
 
@@ -93,3 +92,17 @@ class ParticipantList(ListAPIView):
 
     def get_queryset(self):
         return Participant.objects.all()
+
+
+class DistanceView(ListAPIView):
+    serializer_class = DistanceSerializer
+
+    def get(self, request, *args, **kwargs):
+        participant1 = Participant.objects.get(id=request.GET.get('id1'))
+        participant2 = Participant.objects.get(id=request.GET.get('id2'))
+        coords1_str = participant1.location.split()
+        coords2_str = participant2.location.split()
+        coords1 = (float(float_normalize(coords1_str[0])), float(float_normalize(coords1_str[1])))
+        coords2 = (float(float_normalize(coords2_str[0])), float(float_normalize(coords2_str[1])))
+        distance = geo_distance(coords1, coords2)
+        return Response(json.dumps({"message": str(distance)}), status=200)
