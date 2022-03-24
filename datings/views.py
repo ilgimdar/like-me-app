@@ -1,13 +1,13 @@
 import json
 
-from PIL import Image
-from django.http import HttpResponse
 from rest_framework import permissions
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework.response import Response
 
+from logic import jpg_to_png, watermark_with_transparency, send_love_message
 from mysite.settings import MEDIA_ROOT
 from .models import Participant
-from .serializers import ParticipantSerializer
+from .serializers import ParticipantSerializer, MatchSerializer
 
 
 class CreateUserView(CreateAPIView):
@@ -46,25 +46,40 @@ class CreateUserView(CreateAPIView):
             watermark_with_transparency(avatar_url, new_avatar_url, MEDIA_ROOT + '/watermark.png',
                                         position=(0, 0))
             part_get.save()
-            return HttpResponse(json.dumps({'message': 'User ' + username + ' registration successful'}), status=200)
+            return Response(json.dumps({"message": "User " + username + " registration successful"}), status=200)
         except Exception as e:
-            return HttpResponse(json.dumps({'message': str(e)}), status=200)
+            return Response(json.dumps({"message": str(e)}), status=200)
 
 
-def watermark_with_transparency(input_image_path,
-                                output_image_path,
-                                watermark_image_path,
-                                position):
-    base_image = Image.open(input_image_path)
-    watermark = Image.open(watermark_image_path)
-    watermark.thumbnail(base_image.size)
-    width, height = base_image.size
+class MatchView(ListAPIView):
+    model = Participant
+    serializer_class = MatchSerializer
+    permission_classes = [
+        permissions.AllowAny
+    ]
 
-    transparent = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-    transparent.paste(base_image, (0, 0))
-    transparent.paste(watermark, position, mask=watermark)
-    transparent.save(output_image_path)
-
-
-def jpg_to_png(img_url):
-    return img_url.replace('.jpg', '.png')
+    def get(self, request, *args, **kwargs):
+        from_id = int(request.GET.get('from_id'))
+        to_id = int(request.GET.get('to_id'))
+        if Participant.objects.filter(id=from_id).exists() and Participant.objects.filter(id=to_id).exists():
+            from_participant = Participant.objects.get(id=from_id)
+            to_participant = Participant.objects.get(id=to_id)
+            likes_json = str(to_participant.likes).replace("'", '"')
+            likes_list = json.loads(likes_json)
+            from_participant.likes[str(to_participant.id)] = 1
+            from_participant.save()
+            if from_id in list(map(int, likes_list.keys())):
+                email1 = from_participant.email
+                email2 = to_participant.email
+                send_love_message(email1,
+                                  'Поздравляем! У вас взаимная симпатия с пользователем ' + to_participant.name +
+                                  '!\n Вот почта для связи: ' + to_participant.email)
+                send_love_message(email2,
+                                  'Поздравляем! У вас взаимная симпатия с пользователем ' + from_participant.name +
+                                  '!\n Вот почта для связи: ' + from_participant.email)
+                print('Emails are successfully sent')
+            else:
+                print('Oh, nooooo!')
+            return Response(json.dumps({"message": "This is life"}), status=200)
+        else:
+            return Response(json.dumps({"message": "ids not exist"}), status=200)
