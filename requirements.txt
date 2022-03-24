@@ -1,6 +1,5 @@
 Django~=4.0.3
 djangorestframework~=3.13.1
-django-jsonfield~=1.4.1
 Pillow~=9.0.1
 django-filter~=21.1
 geopy~=2.2.0
