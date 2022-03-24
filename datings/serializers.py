@@ -1,7 +1,7 @@
+from django_filters import rest_framework as filters
 from rest_framework import serializers
 
 from datings.models import Participant
-from django_filters import rest_framework as filters
 
 
 class ParticipantSerializer(serializers.ModelSerializer):

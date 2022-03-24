@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User
 from django.db import models
 from jsonfield import JSONField
 
@@ -11,7 +10,7 @@ class Participant(models.Model):
     email = models.CharField(max_length=50)
     avatar = models.ImageField(null=True)
     gender = models.CharField(max_length=10)
-    likes = models.JSONField(null=True, default={"-1": 1})
+    likes = JSONField(null=True, default={"-1": 1})
 
     def __str__(self):
         return self.name
