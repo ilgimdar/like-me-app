@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from logic import jpg_to_png, watermark_with_transparency, send_love_message
 from mysite.settings import MEDIA_ROOT
 from .models import Participant
-from .serializers import ParticipantSerializer, MatchSerializer
+from .serializers import ParticipantSerializer, MatchSerializer, ParticipantFilter
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class CreateUserView(CreateAPIView):
@@ -83,3 +84,12 @@ class MatchView(ListAPIView):
             return Response(json.dumps({"message": "This is life"}), status=200)
         else:
             return Response(json.dumps({"message": "ids not exist"}), status=200)
+
+
+class ParticipantList(ListAPIView):
+    serializer_class = ParticipantSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = ParticipantFilter
+
+    def get_queryset(self):
+        return Participant.objects.all()
