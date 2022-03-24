@@ -34,20 +34,24 @@ class CreateUserView(CreateAPIView):
             name = request.POST.get('name')
             email = request.POST.get('email')
             gender = request.POST.get('gender')
-            participant = Participant.objects.create(username=username, password=password, avatar=avatar, name=name,
-                                                     email=email,
-                                                     gender=gender)
-            participant.save()
-            part_get = Participant.objects.get(username=username)
-            avatar_url = MEDIA_ROOT + '/' + str(part_get.avatar)
-            new_avatar_url = jpg_to_png(str(part_get.avatar))
-            part_get.avatar = new_avatar_url
-            part_get.save()
-            new_avatar_url = MEDIA_ROOT + '/' + new_avatar_url
-            watermark_with_transparency(avatar_url, new_avatar_url, MEDIA_ROOT + '/watermark.png',
-                                        position=(0, 0))
-            part_get.save()
-            return Response(json.dumps({"message": "User " + username + " registration successful"}), status=200)
+            location = request.POST.get('location')
+            if not Participant.objects.filter(username=username).exists():
+                participant = Participant.objects.create(username=username, password=password, avatar=avatar, name=name,
+                                                         email=email,
+                                                         gender=gender, location=location)
+                participant.save()
+                part_get = Participant.objects.get(username=username)
+                avatar_url = MEDIA_ROOT + '/' + str(part_get.avatar)
+                new_avatar_url = jpg_to_png(str(part_get.avatar))
+                part_get.avatar = new_avatar_url
+                part_get.save()
+                new_avatar_url = MEDIA_ROOT + '/' + new_avatar_url
+                watermark_with_transparency(avatar_url, new_avatar_url, MEDIA_ROOT + '/watermark.png',
+                                            position=(0, 0))
+                part_get.save()
+                return Response(json.dumps({"message": "User " + username + " registration successful"}), status=200)
+            else:
+                raise Exception
         except Exception as e:
             return Response(json.dumps({"message": str(e)}), status=200)
 
